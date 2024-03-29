@@ -3,7 +3,13 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 
 @Module({
-  imports: [],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: './apps/user/.env',
+    }),
+    DatabaseModule,
+  ],
   controllers: [UserController],
   providers: [UserService],
 })
