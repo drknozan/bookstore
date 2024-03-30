@@ -1,0 +1,100 @@
+version: '3'
+
+services:
+  auth:
+    build:
+      context: ./
+      dockerfile: ./apps/auth/Dockerfile
+    container_name: auth
+    ports:
+      - '3000:3000'
+    depends_on:
+      - postgres
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+    command: npm run start:dev auth
+
+  book:
+    build:
+      context: ./
+      dockerfile: ./apps/book/Dockerfile
+    container_name: book
+    ports:
+      - '3001:3001'
+    depends_on:
+      - postgres
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+    command: npm run start:dev book
+
+  offer:
+    build:
+      context: ./
+      dockerfile: ./apps/offer/Dockerfile
+    container_name: offer
+    ports:
+      - '3002:3002'
+    depends_on:
+      - postgres
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+    command: npm run start:dev offer
+
+  search:
+    build:
+      context: ./
+      dockerfile: ./apps/search/Dockerfile
+    container_name: search
+    ports:
+      - '3003:3003'
+    depends_on:
+      - postgres
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+    command: npm run start:dev search
+
+  user:
+    build:
+      context: ./
+      dockerfile: ./apps/user/Dockerfile
+    container_name: user
+    ports:
+      - '3004:3004'
+    depends_on:
+      - postgres
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+    command: npm run start:dev user
+
+  rabbitmq:
+    image: rabbitmq
+    container_name: rabbitmq
+    ports:
+      - '5672:5672'
+
+  postgres:
+    image: postgres
+    restart: always
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bookstore
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    restart: always
+    container_name: redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./redis/data:/data
