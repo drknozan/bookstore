@@ -1,22 +1,145 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { RpcException } from '@nestjs/microservices';
 
 describe('UserController', () => {
   let userController: UserController;
 
+  const mockUsersService = {
+    createUser: jest.fn(),
+    validateUser: jest.fn(),
+  };
+
   beforeEach(async () => {
-    const app: TestingModule = await Test.createTestingModule({
+    const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
-      providers: [UserService],
+      providers: [{ provide: UserService, useValue: mockUsersService }],
     }).compile();
 
-    userController = app.get<UserController>(UserController);
+    userController = module.get<UserController>(UserController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(userController.getHello()).toBe('Hello World!');
+  it('should be defined', () => {
+    expect(userController).toBeDefined();
+  });
+
+  it('should create new user', async () => {
+    const mockUser = {
+      id: 1,
+      email: 'test@test.com',
+      username: 'testuser',
+      password: 'testpassword',
+    };
+
+    const mockUserWithoutPass = {
+      id: mockUser.id,
+      email: mockUser.email,
+      username: mockUser.username,
+    };
+
+    jest
+      .spyOn(mockUsersService, 'createUser')
+      .mockResolvedValue(mockUserWithoutPass);
+
+    const createdUser = await userController.createUser(
+      {
+        getChannelRef: () => ({ ack: jest.fn() }),
+        getMessage: () => 'message',
+      } as any,
+      {
+        email: mockUser.email,
+        username: mockUser.username,
+        password: mockUser.password,
+      },
+    );
+
+    expect(createdUser).toEqual(mockUserWithoutPass);
+  });
+
+  it('should throw error if email or username already exists when creating new user', async () => {
+    const mockUser = {
+      id: 1,
+      email: 'test@test.com',
+      username: 'testuser',
+      password: 'testpassword',
+    };
+
+    jest.spyOn(mockUsersService, 'createUser').mockImplementation(() => {
+      return Promise.reject(
+        new RpcException({ code: 400, message: 'Email already exists' }),
+      );
     });
+
+    await expect(
+      userController.createUser(
+        {
+          getChannelRef: () => ({ ack: jest.fn() }),
+          getMessage: () => 'message',
+        } as any,
+        {
+          email: mockUser.email,
+          username: mockUser.username,
+          password: mockUser.password,
+        },
+      ),
+    ).rejects.toThrow(
+      new RpcException({ code: 400, message: 'Email already exists' }),
+    );
+  });
+
+  it('should validate given user', async () => {
+    const mockUser = {
+      id: 1,
+      email: 'test@test.com',
+      username: 'testuser',
+      password: 'testpassword',
+    };
+
+    jest.spyOn(mockUsersService, 'validateUser').mockImplementation(() => {
+      return Promise.resolve(mockUser);
+    });
+
+    const user = await userController.validateUser(
+      {
+        getChannelRef: () => ({ ack: jest.fn() }),
+        getMessage: () => 'message',
+      } as any,
+      {
+        email: mockUser.email,
+        password: mockUser.password,
+      },
+    );
+    expect(user).toEqual(mockUser);
+  });
+
+  it('should throw error when email or password is wrong', async () => {
+    const mockUser = {
+      id: 1,
+      email: 'test@test.com',
+      username: 'testuser',
+      password: 'testpassword',
+    };
+
+    jest.spyOn(mockUsersService, 'validateUser').mockImplementation(() => {
+      return Promise.reject(
+        new RpcException({ code: 401, message: 'Email or password is wrong' }),
+      );
+    });
+
+    await expect(
+      userController.validateUser(
+        {
+          getChannelRef: () => ({ ack: jest.fn() }),
+          getMessage: () => 'message',
+        } as any,
+        {
+          email: mockUser.email,
+          password: mockUser.password,
+        },
+      ),
+    ).rejects.toThrow(
+      new RpcException({ code: 400, message: 'Email or password is wrong' }),
+    );
   });
 });

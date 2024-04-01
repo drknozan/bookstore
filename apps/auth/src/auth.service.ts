@@ -1,8 +1,44 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ClientProxy } from '@nestjs/microservices';
+import { lastValueFrom } from 'rxjs';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
-  getHello(): string {
-    return 'Hello World!';
+  constructor(
+    @Inject('USER_SERVICE') private userClient: ClientProxy,
+    private jwtService: JwtService,
+  ) {}
+
+  async register(registerUser: RegisterDto) {
+    const createdUser = await lastValueFrom(
+      this.userClient.send('create_user', registerUser),
+    );
+
+    return createdUser;
+  }
+
+  async login(loginUser: LoginDto) {
+    const user = await lastValueFrom(
+      this.userClient.send('validate_user', loginUser),
+    );
+
+    const token = await this.jwtService.signAsync({
+      user: { username: user.username },
+    });
+
+    return { token, user: { username: user.username } };
+  }
+
+  async verifyToken(token: string) {
+    console.log(token);
+    try {
+      const payload = await this.jwtService.verifyAsync(token);
+      return payload;
+    } catch (error) {
+      throw new UnauthorizedException();
+    }
   }
 }
