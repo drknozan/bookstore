@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BookService } from './book.service';
 import { Book } from './entities/book.entity';
+import { NotFoundException } from '@nestjs/common';
 
 describe('BookService', () => {
   let bookService: BookService;
@@ -9,6 +10,7 @@ describe('BookService', () => {
   const mockBookRepository = {
     save: jest.fn(),
     findOneBy: jest.fn(),
+    update: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -55,6 +57,8 @@ describe('BookService', () => {
       { username: 'testuser' },
     );
 
+    delete mockBook.id;
+
     expect(mockBookRepository.save).toHaveBeenCalled();
     expect(createdBook).toEqual(mockBook);
   });
@@ -77,7 +81,33 @@ describe('BookService', () => {
 
     const book = await bookService.getBook(mockBook.slug);
 
+    delete mockBook.id;
+
     expect(mockBookRepository.findOneBy).toHaveBeenCalled();
     expect(book).toEqual(mockBook);
+  });
+
+  it('should throw error if book not found', async () => {
+    const mockBook = {
+      id: '1',
+      slug: 'lTwkejX-l_iAV096c0CLK-book-name',
+      name: 'book-name',
+      description: 'book-description',
+      year: 2015,
+      author: 'book-author',
+      numberOfPages: 500,
+      language: 'english',
+      price: 35,
+      ownerUsername: 'testuser',
+    };
+
+    jest.spyOn(mockBookRepository, 'findOneBy').mockResolvedValue(false);
+
+    delete mockBook.id;
+
+    expect(mockBookRepository.findOneBy).toHaveBeenCalled();
+    await expect(bookService.getBook(mockBook.slug)).rejects.toThrow(
+      new NotFoundException('Book not found'),
+    );
   });
 });

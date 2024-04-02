@@ -9,6 +9,7 @@ describe('BookController', () => {
   const mockBookService = {
     createBook: jest.fn(),
     getBook: jest.fn(),
+    updateBook: jest.fn(),
   };
 
   const mockAuthGuard = {
@@ -44,7 +45,6 @@ describe('BookController', () => {
 
   it('should create new book', async () => {
     const mockBook = {
-      id: '1',
       slug: 'lTwkejX-l_iAV096c0CLK-book-name',
       name: 'book-name',
       description: 'book-description',
@@ -75,9 +75,8 @@ describe('BookController', () => {
     expect(createdBook).toEqual(mockBook);
   });
 
-  it('should get book by id', async () => {
+  it('should get book by slug', async () => {
     const mockBook = {
-      id: '1',
       slug: 'lTwkejX-l_iAV096c0CLK-book-name',
       name: 'book-name',
       description: 'book-description',
@@ -95,5 +94,46 @@ describe('BookController', () => {
 
     expect(mockBookService.getBook).toHaveBeenCalled();
     expect(book).toEqual(mockBook);
+  });
+
+  it('should update book by slug', async () => {
+    const mockBook = {
+      slug: 'lTwkejX-l_iAV096c0CLK-book-name',
+      name: 'book-name',
+      description: 'book-description',
+      year: 2015,
+      author: 'book-author',
+      numberOfPages: 500,
+      language: 'english',
+      price: 35,
+      ownerUsername: 'testuser',
+    };
+
+    const mockBookToUpdate = {
+      name: 'book-new-name',
+      description: 'book-new-description',
+      year: 2017,
+      author: 'book-new-author',
+      numberOfPages: 500,
+      language: 'english',
+      price: 35,
+    };
+
+    jest.spyOn(mockBookService, 'updateBook').mockResolvedValue({
+      slug: mockBook.slug,
+      ...mockBookToUpdate,
+    });
+
+    const book = await bookController.updateBook(
+      mockBook.slug,
+      mockBookToUpdate,
+      { user: { username: 'testuser' } },
+    );
+
+    expect(mockBookService.updateBook).toHaveBeenCalled();
+    expect(book).toEqual({
+      slug: mockBook.slug,
+      ...mockBookToUpdate,
+    });
   });
 });

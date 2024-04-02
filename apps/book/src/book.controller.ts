@@ -6,12 +6,14 @@ import {
   UseGuards,
   Param,
   Get,
+  Put,
 } from '@nestjs/common';
 import { BookService } from './book.service';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from './guards/auth.guard';
+import { CreateBookDto } from './dto/create-book.dto';
+import { UpdateBookDto } from './dto/update-book.dto';
 import { BookDto } from './dto/book.dto';
-import { Book } from './entities/book.entity';
 
 @Controller()
 export class BookController {
@@ -20,7 +22,7 @@ export class BookController {
   @Get('/books/:slug')
   @ApiResponse({ status: 400, description: 'BAD_REQUEST' })
   @ApiResponse({ status: 500, description: 'INTERNAL_ERROR' })
-  async getBook(@Param('slug') slug: string): Promise<Book> {
+  async getBook(@Param('slug') slug: string): Promise<BookDto> {
     const book = await this.bookService.getBook(slug);
 
     return book;
@@ -31,10 +33,33 @@ export class BookController {
   @ApiBearerAuth()
   @ApiResponse({ status: 400, description: 'BAD_REQUEST' })
   @ApiResponse({ status: 500, description: 'INTERNAL_ERROR' })
-  async createBook(@Body() bookDto: BookDto, @Request() req): Promise<Book> {
+  async createBook(
+    @Body() createBookDto: CreateBookDto,
+    @Request() req,
+  ): Promise<BookDto> {
     const { user } = req.user;
-    const createdBook = await this.bookService.createBook(bookDto, user);
+    const createdBook = await this.bookService.createBook(createBookDto, user);
 
     return createdBook;
+  }
+
+  @UseGuards(AuthGuard)
+  @Put('/books/update/:slug')
+  @ApiBearerAuth()
+  @ApiResponse({ status: 400, description: 'BAD_REQUEST' })
+  @ApiResponse({ status: 500, description: 'INTERNAL_ERROR' })
+  async updateBook(
+    @Param('slug') slug: string,
+    @Body() updateBookDto: UpdateBookDto,
+    @Request() req,
+  ): Promise<BookDto> {
+    const { user } = req.user;
+    const updatedBook = await this.bookService.updateBook(
+      slug,
+      updateBookDto,
+      user,
+    );
+
+    return updatedBook;
   }
 }

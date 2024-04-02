@@ -1,11 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Book } from './entities/book.entity';
 import { IUser } from './interfaces/user.interface';
-import { BookDto } from './dto/book.dto';
+import { UpdateBookDto } from './dto/update-book.dto';
+import { CreateBookDto } from './dto/create-book.dto';
 import { nanoid } from 'nanoid';
 import slugify from 'slugify';
+import { bookMapper } from './mappers/book.mapper';
+import { BookDto } from './dto/book.dto';
 
 @Injectable()
 export class BookService {
@@ -13,24 +20,57 @@ export class BookService {
     @InjectRepository(Book) private bookRepository: Repository<Book>,
   ) {}
 
-  async getBook(slug: string): Promise<Book> {
+  async createBook(
+    createBookDto: CreateBookDto,
+    user: IUser,
+  ): Promise<BookDto> {
+    const urlId = nanoid();
+    const slug = urlId + '-' + slugify(createBookDto.name);
+
+    const book = { ownerUsername: user.username, slug, ...createBookDto };
+
+    const createdBook = await this.bookRepository.save(book);
+
+    return bookMapper(createdBook);
+  }
+
+  async getBook(slug: string): Promise<BookDto> {
     const book = await this.bookRepository.findOneBy({ slug });
 
     if (!book) {
       throw new NotFoundException('Book not found');
     }
 
-    return book;
+    return bookMapper(book);
   }
 
-  async createBook(bookDto: BookDto, user: IUser): Promise<Book> {
-    const urlId = nanoid();
-    const slug = urlId + '-' + slugify(bookDto.name);
-    console.log(slug);
-    const book = { ownerUsername: user.username, slug, ...bookDto };
+  async updateBook(
+    slug: string,
+    updateBookDto: UpdateBookDto,
+    user: IUser,
+  ): Promise<BookDto> {
+    const bookBySlug = await this.getBook(slug);
 
-    const createdBook = await this.bookRepository.save(book);
+    if (bookBySlug.ownerUsername !== user.username) {
+      throw new UnauthorizedException('User is not owner of the book');
+    }
 
-    return createdBook;
+    let newSlug = bookBySlug.slug;
+
+    if (updateBookDto.name && bookBySlug.name !== updateBookDto.name) {
+      const urlId = nanoid();
+      newSlug = urlId + '-' + slugify(updateBookDto.name);
+    }
+
+    await this.bookRepository.update(
+      { slug: bookBySlug.slug },
+      { slug: newSlug, ...updateBookDto },
+    );
+
+    const updatedBook = await this.bookRepository.findOneBy({
+      slug: newSlug,
+    });
+
+    return bookMapper(updatedBook);
   }
 }
