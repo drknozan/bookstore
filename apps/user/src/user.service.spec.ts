@@ -12,6 +12,7 @@ describe('UserService', () => {
     findOneBy: jest.fn(),
     findAndCount: jest.fn(),
     save: jest.fn(),
+    update: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -114,5 +115,51 @@ describe('UserService', () => {
 
     expect(mockUserRepository.findOneBy).toHaveBeenCalled();
     expect(user).toEqual(mockUser);
+  });
+
+  it('should update email', async () => {
+    const mockUser = {
+      id: 1,
+      email: 'test@test.com',
+      username: 'testuser',
+    };
+
+    const newEmail = 'test1@test1.com';
+
+    jest.spyOn(mockUserRepository, 'findOneBy').mockResolvedValue(null);
+    jest.spyOn(mockUserRepository, 'update').mockResolvedValue({ affected: 1 });
+
+    const { message } = await userService.updateEmail(
+      { email: newEmail },
+      {
+        username: mockUser.username,
+      },
+    );
+
+    expect(mockUserRepository.findOneBy).toHaveBeenCalled();
+    expect(mockUserRepository.update).toHaveBeenCalled();
+    expect(message).toEqual('Email updated');
+  });
+
+  it('should update password', async () => {
+    const mockUser = {
+      id: 1,
+      email: 'test@test.com',
+      username: 'testuser',
+    };
+
+    const newPassword = 'newpassword';
+
+    jest.spyOn(mockUserRepository, 'update').mockResolvedValue({ affected: 1 });
+
+    const { message } = await userService.updatePassword(
+      { password: newPassword },
+      {
+        username: mockUser.username,
+      },
+    );
+
+    expect(mockUserRepository.update).toHaveBeenCalled();
+    expect(message).toEqual('Password updated');
   });
 });

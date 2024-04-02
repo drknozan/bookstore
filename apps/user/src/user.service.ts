@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
@@ -6,6 +11,8 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcryptjs';
 import { RpcException } from '@nestjs/microservices';
+import { UpdateEmailDto } from './dto/update-email.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @Injectable()
 export class UserService {
@@ -23,6 +30,52 @@ export class UserService {
     delete userByUsername.password;
 
     return userByUsername;
+  }
+
+  async updateEmail(
+    updateEmailDto: UpdateEmailDto,
+    user,
+  ): Promise<{ message: string }> {
+    const { email } = updateEmailDto;
+
+    if (email) {
+      const userByEmail = await this.usersRepository.findOneBy({ email });
+
+      if (userByEmail) {
+        throw new BadRequestException('Email already exists');
+      }
+    }
+
+    const updated = await this.usersRepository.update(
+      { username: user.username },
+      { email },
+    );
+
+    if (updated.affected !== 0) {
+      return { message: 'Email updated' };
+    } else {
+      throw new InternalServerErrorException('Something went wrong');
+    }
+  }
+
+  async updatePassword(
+    updatePasswordDto: UpdatePasswordDto,
+    user,
+  ): Promise<{ message: string }> {
+    const { password } = updatePasswordDto;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const updated = await this.usersRepository.update(
+      { username: user.username },
+      { password: hashedPassword },
+    );
+
+    if (updated.affected !== 0) {
+      return { message: 'Password updated' };
+    } else {
+      throw new InternalServerErrorException('Something went wrong');
+    }
   }
 
   async validateUser(user: LoginDto): Promise<User> {

@@ -11,6 +11,8 @@ describe('UserController', () => {
     createUser: jest.fn(),
     validateUser: jest.fn(),
     getUserByUsername: jest.fn(),
+    updateEmail: jest.fn(),
+    updatePassword: jest.fn(),
   };
 
   const mockAuthGuard = {
@@ -178,5 +180,49 @@ describe('UserController', () => {
 
     expect(mockUsersService.getUserByUsername).toHaveBeenCalled();
     expect(user).toEqual(mockUser);
+  });
+
+  it('should update email', async () => {
+    const mockUser = {
+      id: 1,
+      email: 'test@test.com',
+      username: 'testuser',
+    };
+
+    const newEmail = 'test1@test1.com';
+
+    jest
+      .spyOn(mockUsersService, 'updateEmail')
+      .mockResolvedValue({ message: 'Email updated' });
+
+    const { message } = await userController.updateEmail(
+      { email: newEmail },
+      { user: { username: mockUser.username } },
+    );
+
+    expect(mockUsersService.updateEmail).toHaveBeenCalled();
+    expect(message).toEqual('Email updated');
+  });
+
+  it('should update password', async () => {
+    const mockUser = {
+      id: 1,
+      email: 'test@test.com',
+      username: 'testuser',
+    };
+
+    const newPassword = 'newPassword';
+
+    jest
+      .spyOn(mockUsersService, 'updatePassword')
+      .mockResolvedValue({ message: 'Password updated' });
+
+    const { message } = await userController.updatePassword(
+      { password: newPassword },
+      { user: { username: mockUser.username } },
+    );
+
+    expect(mockUsersService.updatePassword).toHaveBeenCalled();
+    expect(message).toEqual('Password updated');
   });
 });
