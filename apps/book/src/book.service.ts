@@ -73,4 +73,16 @@ export class BookService {
 
     return bookMapper(updatedBook);
   }
+
+  async deleteBook(slug: string, user: IUser): Promise<{ message: string }> {
+    const bookBySlug = await this.getBook(slug);
+
+    if (bookBySlug.ownerUsername !== user.username) {
+      throw new UnauthorizedException('User is not owner of the book');
+    }
+
+    await this.bookRepository.delete({ slug });
+
+    return { message: 'Book deleted' };
+  }
 }

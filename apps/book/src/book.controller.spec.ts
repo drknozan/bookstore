@@ -10,6 +10,7 @@ describe('BookController', () => {
     createBook: jest.fn(),
     getBook: jest.fn(),
     updateBook: jest.fn(),
+    deleteBook: jest.fn(),
   };
 
   const mockAuthGuard = {
@@ -134,6 +135,33 @@ describe('BookController', () => {
     expect(book).toEqual({
       slug: mockBook.slug,
       ...mockBookToUpdate,
+    });
+  });
+
+  it('should delete book by slug', async () => {
+    const mockBook = {
+      slug: 'lTwkejX-l_iAV096c0CLK-book-name',
+      name: 'book-name',
+      description: 'book-description',
+      year: 2015,
+      author: 'book-author',
+      numberOfPages: 500,
+      language: 'english',
+      price: 35,
+      ownerUsername: 'testuser',
+    };
+
+    jest
+      .spyOn(mockBookService, 'deleteBook')
+      .mockResolvedValue({ message: 'Book deleted' });
+
+    const message = await bookController.deleteBook(mockBook.slug, {
+      user: { username: 'testuser' },
+    });
+
+    expect(mockBookService.deleteBook).toHaveBeenCalled();
+    expect(message).toEqual({
+      message: 'Book deleted',
     });
   });
 });

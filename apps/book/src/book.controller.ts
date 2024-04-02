@@ -7,6 +7,7 @@ import {
   Param,
   Get,
   Put,
+  Delete,
 } from '@nestjs/common';
 import { BookService } from './book.service';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
@@ -32,7 +33,9 @@ export class BookController {
   @Post('/books/create')
   @ApiBearerAuth()
   @ApiResponse({ status: 400, description: 'BAD_REQUEST' })
+  @ApiResponse({ status: 401, description: 'UNAUTHORIZED' })
   @ApiResponse({ status: 500, description: 'INTERNAL_ERROR' })
+  @ApiResponse({ status: 201, description: 'CREATED' })
   async createBook(
     @Body() createBookDto: CreateBookDto,
     @Request() req,
@@ -47,6 +50,7 @@ export class BookController {
   @Put('/books/update/:slug')
   @ApiBearerAuth()
   @ApiResponse({ status: 400, description: 'BAD_REQUEST' })
+  @ApiResponse({ status: 401, description: 'UNAUTHORIZED' })
   @ApiResponse({ status: 500, description: 'INTERNAL_ERROR' })
   async updateBook(
     @Param('slug') slug: string,
@@ -61,5 +65,21 @@ export class BookController {
     );
 
     return updatedBook;
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete('/books/delete/:slug')
+  @ApiBearerAuth()
+  @ApiResponse({ status: 400, description: 'BAD_REQUEST' })
+  @ApiResponse({ status: 401, description: 'UNAUTHORIZED' })
+  @ApiResponse({ status: 500, description: 'INTERNAL_ERROR' })
+  async deleteBook(
+    @Param('slug') slug: string,
+    @Request() req,
+  ): Promise<{ message: string }> {
+    const { user } = req.user;
+    const message = await this.bookService.deleteBook(slug, user);
+
+    return message;
   }
 }

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BookService } from './book.service';
 import { Book } from './entities/book.entity';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 
 describe('BookService', () => {
   let bookService: BookService;
@@ -11,6 +11,7 @@ describe('BookService', () => {
     save: jest.fn(),
     findOneBy: jest.fn(),
     update: jest.fn(),
+    delete: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -108,6 +109,55 @@ describe('BookService', () => {
     expect(mockBookRepository.findOneBy).toHaveBeenCalled();
     await expect(bookService.getBook(mockBook.slug)).rejects.toThrow(
       new NotFoundException('Book not found'),
+    );
+  });
+
+  it('should delete book by slug', async () => {
+    const mockBook = {
+      slug: 'lTwkejX-l_iAV096c0CLK-book-name',
+      name: 'book-name',
+      description: 'book-description',
+      year: 2015,
+      author: 'book-author',
+      numberOfPages: 500,
+      language: 'english',
+      price: 35,
+      ownerUsername: 'testuser',
+    };
+
+    jest.spyOn(mockBookRepository, 'findOneBy').mockResolvedValue(mockBook);
+
+    const message = await bookService.deleteBook(mockBook.slug, {
+      username: 'testuser',
+    });
+
+    expect(mockBookRepository.delete).toHaveBeenCalled();
+    expect(message).toEqual({
+      message: 'Book deleted',
+    });
+  });
+
+  it('should throws error if user is not owner of the book when deleting book', async () => {
+    const mockBook = {
+      slug: 'lTwkejX-l_iAV096c0CLK-book-name',
+      name: 'book-name',
+      description: 'book-description',
+      year: 2015,
+      author: 'book-author',
+      numberOfPages: 500,
+      language: 'english',
+      price: 35,
+      ownerUsername: 'testuser1',
+    };
+
+    jest.spyOn(mockBookRepository, 'findOneBy').mockResolvedValue(mockBook);
+
+    await expect(
+      bookService.deleteBook(mockBook.slug, {
+        username: 'testuser',
+      }),
+    ).rejects.toThrow(
+      new UnauthorizedException('User is not owner of the book'),
     );
   });
 });
