@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
-import { ApiBody, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from './guards/auth.guard';
 import {
@@ -52,12 +52,13 @@ export class AuthController {
 
   @UseGuards(AuthGuard)
   @Get('profile')
+  @ApiBearerAuth()
   @ApiResponse({ status: 401, description: 'UNAUTHORIZED' })
   getProfile(@Request() req) {
     return req.user;
   }
 
-  @MessagePattern('verify_token')
+  @MessagePattern({ cmd: 'verify_token' })
   async validateToken(
     @Ctx() context: RmqContext,
     @Payload() payload: { token: string },

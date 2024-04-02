@@ -14,7 +14,7 @@ export class AuthService {
 
   async register(registerUser: RegisterDto) {
     const createdUser = await lastValueFrom(
-      this.userClient.send('create_user', registerUser),
+      this.userClient.send({ cmd: 'create_user' }, registerUser),
     );
 
     return createdUser;
@@ -22,7 +22,7 @@ export class AuthService {
 
   async login(loginUser: LoginDto) {
     const user = await lastValueFrom(
-      this.userClient.send('validate_user', loginUser),
+      this.userClient.send({ cmd: 'validate_user' }, loginUser),
     );
 
     const token = await this.jwtService.signAsync({
@@ -33,7 +33,6 @@ export class AuthService {
   }
 
   async verifyToken(token: string) {
-    console.log(token);
     try {
       const payload = await this.jwtService.verifyAsync(token);
       return payload;

@@ -26,7 +26,7 @@ export class AuthGuard implements CanActivate {
 
     try {
       const payload = await lastValueFrom(
-        this.authClient.send('verify_token', { token }),
+        this.authClient.send({ cmd: 'verify_token' }, { token }),
       );
 
       request['user'] = payload;

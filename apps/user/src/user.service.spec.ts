@@ -8,7 +8,9 @@ describe('UserService', () => {
   let userService: UserService;
 
   const mockUserRepository = {
+    findOne: jest.fn(),
     findOneBy: jest.fn(),
+    findAndCount: jest.fn(),
     save: jest.fn(),
   };
 
@@ -87,9 +89,7 @@ describe('UserService', () => {
       password: 'testpassword',
     };
 
-    jest.spyOn(mockUserRepository, 'findOneBy').mockResolvedValue(false);
-
-    expect(mockUserRepository.findOneBy).toHaveBeenCalled();
+    jest.spyOn(mockUserRepository, 'findOne').mockResolvedValue(false);
 
     await expect(
       userService.validateUser({
@@ -99,5 +99,20 @@ describe('UserService', () => {
     ).rejects.toThrow(
       new RpcException({ code: 400, message: 'Email or password is wrong' }),
     );
+  });
+
+  it('should find user by username', async () => {
+    const mockUser = {
+      id: 1,
+      email: 'test@test.com',
+      username: 'testuser',
+    };
+
+    jest.spyOn(mockUserRepository, 'findOneBy').mockResolvedValue(mockUser);
+
+    const user = await userService.getUserByUsername(mockUser.username);
+
+    expect(mockUserRepository.findOneBy).toHaveBeenCalled();
+    expect(user).toEqual(mockUser);
   });
 });

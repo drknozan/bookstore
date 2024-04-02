@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { RpcException } from '@nestjs/microservices';
+import { AuthGuard } from './guards/auth.guard';
 
 describe('UserController', () => {
   let userController: UserController;
@@ -9,12 +10,31 @@ describe('UserController', () => {
   const mockUsersService = {
     createUser: jest.fn(),
     validateUser: jest.fn(),
+    getUserByUsername: jest.fn(),
+  };
+
+  const mockAuthGuard = {
+    canActivate: jest.fn(),
+  };
+
+  const mockAuthServiceClient = {
+    send: jest.fn(),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
-      providers: [{ provide: UserService, useValue: mockUsersService }],
+      providers: [
+        { provide: UserService, useValue: mockUsersService },
+        {
+          provide: AuthGuard,
+          useValue: mockAuthGuard,
+        },
+        {
+          provide: 'AUTH_SERVICE',
+          useValue: mockAuthServiceClient,
+        },
+      ],
     }).compile();
 
     userController = module.get<UserController>(UserController);
@@ -141,5 +161,22 @@ describe('UserController', () => {
     ).rejects.toThrow(
       new RpcException({ code: 400, message: 'Email or password is wrong' }),
     );
+  });
+
+  it('should find user by username', async () => {
+    const mockUser = {
+      id: 1,
+      email: 'test@test.com',
+      username: 'testuser',
+    };
+
+    jest
+      .spyOn(mockUsersService, 'getUserByUsername')
+      .mockResolvedValue(mockUser);
+
+    const user = await userController.getUserByUsername(mockUser.username);
+
+    expect(mockUsersService.getUserByUsername).toHaveBeenCalled();
+    expect(user).toEqual(mockUser);
   });
 });

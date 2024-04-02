@@ -14,9 +14,10 @@ async function bootstrap() {
     .setDescription('The authentication service API description')
     .setVersion('1.0')
     .addTag('auth')
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('swagger', app, document);
 
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.RMQ,

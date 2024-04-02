@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
@@ -13,10 +13,25 @@ export class UserService {
     @InjectRepository(User) private usersRepository: Repository<User>,
   ) {}
 
+  async getUserByUsername(username: string): Promise<User> {
+    const userByUsername = await this.usersRepository.findOneBy({ username });
+
+    if (!userByUsername) {
+      throw new NotFoundException();
+    }
+
+    delete userByUsername.password;
+
+    return userByUsername;
+  }
+
   async validateUser(user: LoginDto): Promise<User> {
     const { email, password } = user;
 
-    const userByEmail = await this.usersRepository.findOneBy({ email });
+    const userByEmail = await this.usersRepository.findOne({
+      select: ['id', 'username', 'email', 'password'],
+      where: { email },
+    });
 
     if (!userByEmail) {
       throw new RpcException({

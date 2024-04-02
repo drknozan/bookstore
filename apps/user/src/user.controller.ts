@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
   Ctx,
@@ -13,7 +13,13 @@ import { LoginDto } from './dto/login.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @MessagePattern('create_user')
+  @Get('/users/:username')
+  async getUserByUsername(@Param('username') username: string) {
+    const user = await this.userService.getUserByUsername(username);
+    return user;
+  }
+
+  @MessagePattern({ cmd: 'create_user' })
   async createUser(
     @Ctx() context: RmqContext,
     @Payload() registerUser: RegisterDto,
@@ -26,7 +32,7 @@ export class UserController {
     return createdUser;
   }
 
-  @MessagePattern('validate_user')
+  @MessagePattern({ cmd: 'validate_user' })
   async validateUser(
     @Ctx() context: RmqContext,
     @Payload() validateUser: LoginDto,
