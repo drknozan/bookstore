@@ -8,6 +8,7 @@ import { OfferDto } from './dto/offer.dto';
 import { offerMapper } from './mappers/offer.mapper';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
+import { UpdateOfferDto } from './dto/update-offer.dto';
 
 @Injectable()
 export class OfferService {
@@ -61,5 +62,25 @@ export class OfferService {
 
     const offers = await this.offerRepository.findBy({ bookSlug: slug });
     return offers.map((offer) => offerMapper(offer));
+  }
+
+  async updateOffer(
+    updateOfferDto: UpdateOfferDto,
+    user: IUser,
+  ): Promise<OfferDto> {
+    const { bookSlug, amount } = updateOfferDto;
+    const { username } = user;
+
+    await lastValueFrom(
+      this.bookClient.send(
+        { cmd: 'check_book_owner' },
+        { slug: bookSlug, username },
+      ),
+    );
+
+    await this.offerRepository.update({ bookSlug }, { amount });
+    const updatedOffer = await this.offerRepository.findOneBy({ bookSlug });
+
+    return offerMapper(updatedOffer);
   }
 }
