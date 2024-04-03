@@ -1,4 +1,13 @@
-import { Body, Controller, Request, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Request,
+  Post,
+  UseGuards,
+  Get,
+  Param,
+  HttpException,
+} from '@nestjs/common';
 import { OfferService } from './offer.service';
 import { AuthGuard } from './guards/auth.guard';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
@@ -28,5 +37,40 @@ export class OfferController {
     );
 
     return createdBook;
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/offers/')
+  @ApiBearerAuth()
+  @ApiResponse({ status: 400, description: 'BAD_REQUEST' })
+  @ApiResponse({ status: 401, description: 'UNAUTHORIZED' })
+  @ApiResponse({ status: 500, description: 'INTERNAL_ERROR' })
+  async getUserOffers(@Request() req): Promise<OfferDto[]> {
+    const { user } = req.user;
+
+    const offers = await this.offerService.getUserOffers(user);
+
+    return offers;
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/offers/:slug')
+  @ApiBearerAuth()
+  @ApiResponse({ status: 400, description: 'BAD_REQUEST' })
+  @ApiResponse({ status: 401, description: 'UNAUTHORIZED' })
+  @ApiResponse({ status: 500, description: 'INTERNAL_ERROR' })
+  async getBookOffers(
+    @Param('slug') slug: string,
+    @Request() req,
+  ): Promise<OfferDto[]> {
+    const { user } = req.user;
+
+    try {
+      const offers = await this.offerService.getBookOffers({ slug, user });
+
+      return offers;
+    } catch (error) {
+      throw new HttpException(error.message, error.code || 500);
+    }
   }
 }

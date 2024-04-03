@@ -1,6 +1,6 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -37,7 +37,10 @@ export class AuthService {
       const payload = await this.jwtService.verifyAsync(token);
       return payload;
     } catch (error) {
-      throw new UnauthorizedException();
+      throw new RpcException({
+        code: 401,
+        message: 'Unauthorized',
+      });
     }
   }
 }

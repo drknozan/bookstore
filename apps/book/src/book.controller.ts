@@ -15,6 +15,12 @@ import { AuthGuard } from './guards/auth.guard';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { BookDto } from './dto/book.dto';
+import {
+  Ctx,
+  MessagePattern,
+  Payload,
+  RmqContext,
+} from '@nestjs/microservices';
 
 @Controller()
 export class BookController {
@@ -81,5 +87,24 @@ export class BookController {
     const message = await this.bookService.deleteBook(slug, user);
 
     return message;
+  }
+
+  @MessagePattern({ cmd: 'check_book_owner' })
+  async checkBookOwner(
+    @Ctx() context: RmqContext,
+    @Payload() payload: { slug: string; username: string },
+  ) {
+    const { slug, username } = payload;
+
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
+    channel.ack(originalMsg);
+
+    const isOwner = await this.bookService.checkBookOwnership({
+      slug,
+      username,
+    });
+
+    return isOwner;
   }
 }

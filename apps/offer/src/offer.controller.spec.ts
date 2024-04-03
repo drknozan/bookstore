@@ -8,6 +8,7 @@ describe('OfferController', () => {
 
   const mockOfferService = {
     createOffer: jest.fn(),
+    getUserOffers: jest.fn(),
   };
 
   const mockAuthGuard = {
@@ -60,5 +61,29 @@ describe('OfferController', () => {
 
     expect(mockOfferService.createOffer).toHaveBeenCalled();
     expect(createdOffer).toEqual(mockOffer);
+  });
+
+  it('should get user offers', async () => {
+    const mockOffers = [
+      {
+        bookSlug: 'lTwkejX-l_iAV096c0CLK-book-name',
+        username: 'testuser',
+        amount: 50,
+      },
+      {
+        bookSlug: 'lTwkejX-l_iAV096c0CLK-book-name',
+        username: 'testuser',
+        amount: 50,
+      },
+    ];
+
+    jest.spyOn(mockOfferService, 'getUserOffers').mockResolvedValue(mockOffers);
+
+    const offers = await offerController.getUserOffers({
+      user: { username: 'testuser' },
+    });
+
+    expect(mockOfferService.getUserOffers).toHaveBeenCalled();
+    expect(offers).toEqual(mockOffers);
   });
 });

@@ -11,6 +11,11 @@ describe('OfferService', () => {
     save: jest.fn(),
     findOne: jest.fn(),
     findOneBy: jest.fn(),
+    findBy: jest.fn(),
+  };
+
+  const mockBookServiceClient = {
+    send: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -18,6 +23,10 @@ describe('OfferService', () => {
       providers: [
         OfferService,
         { provide: getRepositoryToken(Offer), useValue: mockOfferRepository },
+        {
+          provide: 'BOOK_SERVICE',
+          useValue: mockBookServiceClient,
+        },
       ],
     }).compile();
 
@@ -73,5 +82,35 @@ describe('OfferService', () => {
         { username: 'testuser' },
       ),
     ).rejects.toThrow(new ConflictException('Offer already exists'));
+  });
+
+  it('should get user offers', async () => {
+    const mockOffers = [
+      {
+        id: '1',
+        bookSlug: 'lTwkejX-l_iAV096c0CLK-book-name',
+        username: 'testuser',
+        amount: 50,
+      },
+      {
+        id: '2',
+        bookSlug: 'lTwkejX-l_iAV096c0CLK-book-name',
+        username: 'testuser',
+        amount: 50,
+      },
+    ];
+
+    jest.spyOn(mockOfferRepository, 'findBy').mockResolvedValue(mockOffers);
+
+    const offers = await offerService.getUserOffers({
+      username: 'testuser',
+    });
+
+    mockOffers.forEach((offer) => {
+      delete offer.id;
+    });
+
+    expect(mockOfferRepository.findBy).toHaveBeenCalled();
+    expect(offers).toEqual(mockOffers);
   });
 });

@@ -13,6 +13,7 @@ import { nanoid } from 'nanoid';
 import slugify from 'slugify';
 import { bookMapper } from './mappers/book.mapper';
 import { BookDto } from './dto/book.dto';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class BookService {
@@ -84,5 +85,28 @@ export class BookService {
     await this.bookRepository.delete({ slug });
 
     return { message: 'Book deleted' };
+  }
+
+  async checkBookOwnership({
+    slug,
+    username,
+  }: {
+    slug: string;
+    username: string;
+  }) {
+    const book = await this.bookRepository.findOneBy({ slug });
+
+    if (!book) {
+      throw new RpcException({ code: 404, message: 'Book not found' });
+    }
+
+    if (book.ownerUsername !== username) {
+      throw new RpcException({
+        code: 401,
+        message: 'User is not owner of the book',
+      });
+    }
+
+    return true;
   }
 }

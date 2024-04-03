@@ -24,6 +24,16 @@ import { Offer } from './entities/offer.entity';
         },
       },
     ]),
+    ClientsModule.register([
+      {
+        name: 'BOOK_SERVICE',
+        transport: Transport.RMQ,
+        options: {
+          urls: ['amqp://rabbitmq:5672'],
+          queue: 'book_queue',
+        },
+      },
+    ]),
     TypeOrmModule.forFeature([Offer]),
   ],
   controllers: [OfferController],
