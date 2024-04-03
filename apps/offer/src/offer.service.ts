@@ -83,4 +83,16 @@ export class OfferService {
 
     return offerMapper(updatedOffer);
   }
+
+  async deleteOffer(slug: string, user: IUser): Promise<{ message: string }> {
+    const { username } = user;
+
+    await lastValueFrom(
+      this.bookClient.send({ cmd: 'check_book_owner' }, { slug, username }),
+    );
+
+    await this.offerRepository.delete({ bookSlug: slug });
+
+    return { message: 'Offer deleted' };
+  }
 }

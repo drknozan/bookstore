@@ -8,6 +8,7 @@ import {
   Param,
   HttpException,
   Put,
+  Delete,
 } from '@nestjs/common';
 import { OfferService } from './offer.service';
 import { AuthGuard } from './guards/auth.guard';
@@ -95,6 +96,27 @@ export class OfferController {
       );
 
       return updatedOffer;
+    } catch (error) {
+      throw new HttpException(error.message, error.code || 500);
+    }
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete('/offers/delete/:slug')
+  @ApiBearerAuth()
+  @ApiResponse({ status: 400, description: 'BAD_REQUEST' })
+  @ApiResponse({ status: 401, description: 'UNAUTHORIZED' })
+  @ApiResponse({ status: 500, description: 'INTERNAL_ERROR' })
+  async deleteOffer(
+    @Param('slug') slug: string,
+    @Request() req,
+  ): Promise<{ message: string }> {
+    const { user } = req.user;
+
+    try {
+      const message = await this.offerService.deleteOffer(slug, user);
+
+      return message;
     } catch (error) {
       throw new HttpException(error.message, error.code || 500);
     }
