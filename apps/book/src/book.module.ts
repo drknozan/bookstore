@@ -23,6 +23,16 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         },
       },
     ]),
+    ClientsModule.register([
+      {
+        name: 'SEARCH_SERVICE',
+        transport: Transport.RMQ,
+        options: {
+          urls: ['amqp://rabbitmq:5672'],
+          queue: 'search_queue',
+        },
+      },
+    ]),
     DatabaseModule,
     TypeOrmModule.forFeature([Book]),
   ],

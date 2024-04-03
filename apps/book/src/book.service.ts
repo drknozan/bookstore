@@ -1,5 +1,7 @@
 import {
+  Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -13,12 +15,14 @@ import { nanoid } from 'nanoid';
 import slugify from 'slugify';
 import { bookMapper } from './mappers/book.mapper';
 import { BookDto } from './dto/book.dto';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class BookService {
   constructor(
     @InjectRepository(Book) private bookRepository: Repository<Book>,
+    @Inject('SEARCH_SERVICE') private readonly searchClient: ClientProxy,
   ) {}
 
   async createBook(
@@ -31,6 +35,17 @@ export class BookService {
     const book = { ownerUsername: user.username, slug, ...createBookDto };
 
     const createdBook = await this.bookRepository.save(book);
+
+    const result = await lastValueFrom(
+      this.searchClient.send(
+        { cmd: 'insert_es' },
+        { index: 'book', id: createdBook.id, data: createdBook },
+      ),
+    );
+
+    if (result !== 'created') {
+      throw new InternalServerErrorException('Something went wrong');
+    }
 
     return bookMapper(createdBook);
   }
