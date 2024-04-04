@@ -12,24 +12,31 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(registerUser: RegisterDto) {
+  async register(registerDto: RegisterDto) {
+    const { email, username, password } = registerDto;
+
     const createdUser = await lastValueFrom(
-      this.userClient.send({ cmd: 'create_user' }, registerUser),
+      this.userClient.send(
+        { cmd: 'create_user' },
+        { email, username, password },
+      ),
     );
 
     return createdUser;
   }
 
-  async login(loginUser: LoginDto) {
+  async login(loginDto: LoginDto) {
+    const { email, password } = loginDto;
+
     const user = await lastValueFrom(
-      this.userClient.send({ cmd: 'validate_user' }, loginUser),
+      this.userClient.send({ cmd: 'validate_user' }, { email, password }),
     );
 
     const token = await this.jwtService.signAsync({
       user: { username: user.username },
     });
 
-    return { token, user: { username: user.username } };
+    return { token, user };
   }
 
   async verifyToken(token: string) {

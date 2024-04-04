@@ -9,10 +9,12 @@ import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UserDto } from './dto/user.dto';
 import * as bcrypt from 'bcryptjs';
 import { RpcException } from '@nestjs/microservices';
 import { UpdateEmailDto } from './dto/update-email.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { userMapper } from './mappers/user.mapper';
 
 @Injectable()
 export class UserService {
@@ -20,16 +22,16 @@ export class UserService {
     @InjectRepository(User) private usersRepository: Repository<User>,
   ) {}
 
-  async getUserByUsername(username: string): Promise<User> {
-    const userByUsername = await this.usersRepository.findOneBy({ username });
+  async getUserByUsername(username: string): Promise<UserDto> {
+    const user = await this.usersRepository.findOneBy({ username });
 
-    if (!userByUsername) {
+    if (!user) {
       throw new NotFoundException();
     }
 
-    delete userByUsername.password;
+    delete user.password;
 
-    return userByUsername;
+    return userMapper(user);
   }
 
   async updateEmail(
@@ -39,9 +41,9 @@ export class UserService {
     const { email } = updateEmailDto;
 
     if (email) {
-      const userByEmail = await this.usersRepository.findOneBy({ email });
+      const user = await this.usersRepository.findOneBy({ email });
 
-      if (userByEmail) {
+      if (user) {
         throw new BadRequestException('Email already exists');
       }
     }
@@ -78,25 +80,22 @@ export class UserService {
     }
   }
 
-  async validateUser(user: LoginDto): Promise<User> {
-    const { email, password } = user;
+  async validateUser(loginDto: LoginDto): Promise<UserDto> {
+    const { email, password } = loginDto;
 
-    const userByEmail = await this.usersRepository.findOne({
-      select: ['id', 'username', 'email', 'password'],
+    const user = await this.usersRepository.findOne({
+      select: ['username', 'email', 'password'],
       where: { email },
     });
 
-    if (!userByEmail) {
+    if (!user) {
       throw new RpcException({
         code: 401,
         message: 'Email or password is wrong',
       });
     }
 
-    const passwordMatched = await bcrypt.compare(
-      password,
-      userByEmail.password,
-    );
+    const passwordMatched = await bcrypt.compare(password, user.password);
 
     if (!passwordMatched) {
       throw new RpcException({
@@ -105,13 +104,13 @@ export class UserService {
       });
     }
 
-    delete userByEmail.password;
+    delete user.password;
 
-    return userByEmail;
+    return user;
   }
 
-  async createUser(newUser: RegisterDto): Promise<User> {
-    const { email, username, password } = newUser;
+  async createUser(registerDto: RegisterDto): Promise<User> {
+    const { email, username, password } = registerDto;
 
     const existingUserByEmail = await this.usersRepository.findOneBy({
       email,
@@ -134,13 +133,14 @@ export class UserService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const savedUser = await this.usersRepository.save({
+    const user = await this.usersRepository.save({
       email,
       username,
       password: hashedPassword,
     });
 
-    delete savedUser.password;
-    return savedUser;
+    delete user.password;
+
+    return user;
   }
 }

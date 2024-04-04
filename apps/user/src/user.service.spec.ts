@@ -39,7 +39,7 @@ describe('UserService', () => {
     };
 
     const mockUserWithoutPass = {
-      id: mockUser.id,
+      id: 1,
       email: mockUser.email,
       username: mockUser.username,
     };
@@ -109,12 +109,16 @@ describe('UserService', () => {
       username: 'testuser',
     };
 
+    const mockUserWithoutPass = {
+      username: mockUser.username,
+    };
+
     jest.spyOn(mockUserRepository, 'findOneBy').mockResolvedValue(mockUser);
 
     const user = await userService.getUserByUsername(mockUser.username);
 
     expect(mockUserRepository.findOneBy).toHaveBeenCalled();
-    expect(user).toEqual(mockUser);
+    expect(user).toEqual(mockUserWithoutPass);
   });
 
   it('should update email', async () => {

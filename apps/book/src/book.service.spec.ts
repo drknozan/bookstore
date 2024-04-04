@@ -18,6 +18,12 @@ describe('BookService', () => {
     send: jest.fn(),
   };
 
+  const mockRedisServiceClient = {
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -26,6 +32,10 @@ describe('BookService', () => {
         {
           provide: 'SEARCH_SERVICE',
           useValue: mockSearchServiceClient,
+        },
+        {
+          provide: 'REDIS_CLIENT',
+          useValue: mockRedisServiceClient,
         },
       ],
     }).compile();
