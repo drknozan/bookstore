@@ -118,3 +118,17 @@ services:
       - ./es_data:/usr/share/elasticsearch/data
     ports:
       - 9200:9200
+
+  nginx:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: nginx
+    depends_on:
+      - auth
+      - book
+      - offer
+      - search
+      - user
+    ports:
+      - 8080:80
