@@ -58,8 +58,9 @@ export class SearchService {
     });
 
     const results = body.hits.hits.map((res) => res._source);
+    const resultCount = body.hits.total.value;
 
-    return { resultCount: body.hits.total.value, results };
+    return { resultCount, results };
   }
 
   async updateIndex<T>({

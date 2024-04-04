@@ -6,6 +6,7 @@ import { DatabaseModule } from '@app/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Book } from './entities/book.entity';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { RedisModule } from '@app/common/modules/redis.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     ]),
     DatabaseModule,
     TypeOrmModule.forFeature([Book]),
+    RedisModule,
   ],
   controllers: [BookController],
   providers: [BookService],

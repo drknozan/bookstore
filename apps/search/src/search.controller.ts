@@ -39,13 +39,11 @@ export class SearchController {
       index: string;
       query: string;
       fields: string[];
-      page: string;
-      limit: string;
+      page: number;
+      limit: number;
     },
   ) {
-    const { index, query, fields } = payload;
-    const page = Number(payload.page || 1);
-    const limit = Number(payload.limit || 10);
+    const { index, query, fields, page, limit } = payload;
 
     const channel = context.getChannelRef();
     const originalMsg = context.getMessage();

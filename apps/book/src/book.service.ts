@@ -18,12 +18,14 @@ import { BookDto } from './dto/book.dto';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { SearchBookDto } from './dto/search-book.dto';
+import Redis from 'ioredis';
 
 @Injectable()
 export class BookService {
   constructor(
     @InjectRepository(Book) private bookRepository: Repository<Book>,
     @Inject('SEARCH_SERVICE') private readonly searchClient: ClientProxy,
+    @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
   ) {}
 
   async createBook(
@@ -52,17 +54,30 @@ export class BookService {
   }
 
   async getBook(slug: string): Promise<BookDto> {
-    const book = await this.bookRepository.findOneBy({ slug });
+    const cacheKey = `book:${slug}`;
+    const cachedData = await this.redisClient.get(cacheKey);
 
-    if (!book) {
+    if (cachedData) {
+      return JSON.parse(cachedData);
+    }
+
+    const bookBySlug = await this.bookRepository.findOneBy({ slug });
+
+    if (!bookBySlug) {
       throw new NotFoundException('Book not found');
     }
 
-    return bookMapper(book);
+    const book = bookMapper(bookBySlug);
+
+    await this.redisClient.set(cacheKey, JSON.stringify(book));
+
+    return book;
   }
 
   async searchBook(searchBookDto: SearchBookDto): Promise<BookDto[]> {
-    const { query, page, limit } = searchBookDto;
+    const { query } = searchBookDto;
+    const page = Number(searchBookDto.page || 1);
+    const limit = Number(searchBookDto.limit || 10);
 
     if (!query) {
       return [];
@@ -107,6 +122,9 @@ export class BookService {
       slug: newSlug,
     });
 
+    const cacheKey = `book:${updatedBook.slug}`;
+    await this.redisClient.del(cacheKey);
+
     const result = await lastValueFrom(
       this.searchClient.send(
         { cmd: 'update_es' },
@@ -133,6 +151,9 @@ export class BookService {
     }
 
     await this.bookRepository.delete({ slug: book.slug });
+
+    const cacheKey = `book:${book.slug}`;
+    await this.redisClient.del(cacheKey);
 
     const result = await lastValueFrom(
       this.searchClient.send(
