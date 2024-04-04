@@ -107,17 +107,43 @@ export class BookService {
       slug: newSlug,
     });
 
+    const result = await lastValueFrom(
+      this.searchClient.send(
+        { cmd: 'update_es' },
+        { index: 'book', id: updatedBook.id, data: bookMapper(updatedBook) },
+      ),
+    );
+
+    if (result !== 'updated') {
+      throw new InternalServerErrorException('Something went wrong');
+    }
+
     return bookMapper(updatedBook);
   }
 
   async deleteBook(slug: string, user: IUser): Promise<{ message: string }> {
-    const bookBySlug = await this.getBook(slug);
+    const book = await this.bookRepository.findOneBy({ slug });
 
-    if (bookBySlug.ownerUsername !== user.username) {
+    if (!book) {
+      throw new NotFoundException('Book not found');
+    }
+
+    if (book.ownerUsername !== user.username) {
       throw new UnauthorizedException('User is not owner of the book');
     }
 
-    await this.bookRepository.delete({ slug });
+    await this.bookRepository.delete({ slug: book.slug });
+
+    const result = await lastValueFrom(
+      this.searchClient.send(
+        { cmd: 'delete_es' },
+        { index: 'book', id: book.id },
+      ),
+    );
+
+    if (result !== 'deleted') {
+      throw new InternalServerErrorException('Something went wrong');
+    }
 
     return { message: 'Book deleted' };
   }

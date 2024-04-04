@@ -61,4 +61,33 @@ export class SearchService {
 
     return { resultCount: body.hits.total.value, results };
   }
+
+  async updateIndex<T>({
+    index,
+    id,
+    data,
+  }: {
+    index: string;
+    id: string;
+    data: T;
+  }) {
+    const { body } = await this.elasticsearchService.update({
+      index,
+      id,
+      body: {
+        doc: data,
+      },
+    });
+
+    return body.result;
+  }
+
+  async deleteIndex({ index, id }: { index: string; id: string }) {
+    const { body } = await this.elasticsearchService.delete({
+      index,
+      id,
+    });
+
+    return body.result;
+  }
 }

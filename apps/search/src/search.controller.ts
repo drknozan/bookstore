@@ -61,4 +61,52 @@ export class SearchController {
 
     return result;
   }
+
+  @MessagePattern({ cmd: 'update_es' })
+  async updateIndex<T>(
+    @Ctx() context: RmqContext,
+    @Payload()
+    payload: {
+      index: string;
+      id: string;
+      data: T;
+    },
+  ) {
+    const { index, id, data } = payload;
+
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
+    channel.ack(originalMsg);
+
+    const result = await this.searchService.updateIndex({
+      index,
+      id,
+      data,
+    });
+
+    return result;
+  }
+
+  @MessagePattern({ cmd: 'delete_es' })
+  async deleteIndex(
+    @Ctx() context: RmqContext,
+    @Payload()
+    payload: {
+      index: string;
+      id: string;
+    },
+  ) {
+    const { index, id } = payload;
+
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
+    channel.ack(originalMsg);
+
+    const result = await this.searchService.deleteIndex({
+      index,
+      id,
+    });
+
+    return result;
+  }
 }
