@@ -9,7 +9,7 @@ services:
     ports:
       - '3000:3000'
     depends_on:
-      - postgres
+      - user-postgres-db
       - rabbitmq
       - elasticsearch
     volumes:
@@ -24,7 +24,7 @@ services:
     ports:
       - '3001:3001'
     depends_on:
-      - postgres
+      - book-postgres-db
       - rabbitmq
       - elasticsearch
     volumes:
@@ -39,7 +39,7 @@ services:
     ports:
       - '3002:3002'
     depends_on:
-      - postgres
+      - offer-postgres-db
       - rabbitmq
       - elasticsearch
     volumes:
@@ -54,7 +54,6 @@ services:
     ports:
       - '3003:3003'
     depends_on:
-      - postgres
       - rabbitmq
       - elasticsearch
     volumes:
@@ -69,7 +68,7 @@ services:
     ports:
       - '3004:3004'
     depends_on:
-      - postgres
+      - user-postgres-db
       - rabbitmq
       - elasticsearch
     volumes:
@@ -82,10 +81,10 @@ services:
     ports:
       - '5672:5672'
 
-  postgres:
+  book-postgres-db:
     image: postgres
     restart: always
-    container_name: postgres-db
+    container_name: book-postgres-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -93,7 +92,35 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - ./db/data:/var/lib/postgresql/data
+      - ./db/book/data:/var/lib/postgresql/data
+
+  offer-postgres-db:
+    image: postgres
+    restart: always
+    container_name: offer-postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bookstore
+      PGPORT: 5433
+    ports:
+      - '5433:5433'
+    volumes:
+      - ./db/offer/data:/var/lib/postgresql/data
+
+  user-postgres-db:
+    image: postgres
+    restart: always
+    container_name: user-postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bookstore
+      PGPORT: 5434
+    ports:
+      - '5434:5434'
+    volumes:
+      - ./db/user/data:/var/lib/postgresql/data
 
   redis:
     image: redis:latest
