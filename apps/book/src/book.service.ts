@@ -17,6 +17,7 @@ import { bookMapper } from './mappers/book.mapper';
 import { BookDto } from './dto/book.dto';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
+import { SearchBookDto } from './dto/search-book.dto';
 
 @Injectable()
 export class BookService {
@@ -39,7 +40,7 @@ export class BookService {
     const result = await lastValueFrom(
       this.searchClient.send(
         { cmd: 'insert_es' },
-        { index: 'book', id: createdBook.id, data: createdBook },
+        { index: 'book', id: createdBook.id, data: bookMapper(createdBook) },
       ),
     );
 
@@ -58,6 +59,25 @@ export class BookService {
     }
 
     return bookMapper(book);
+  }
+
+  async searchBook(searchBookDto: SearchBookDto): Promise<BookDto[]> {
+    const { query, page, limit } = searchBookDto;
+
+    if (!query) {
+      return [];
+    }
+
+    const fields = ['name', 'description', 'year', 'author', 'language'];
+
+    const books = await lastValueFrom(
+      this.searchClient.send(
+        { cmd: 'search_es' },
+        { index: 'book', query, fields, page, limit },
+      ),
+    );
+
+    return books;
   }
 
   async updateBook(

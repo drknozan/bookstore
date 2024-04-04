@@ -16,9 +16,9 @@ export class CreateBookDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  @Max(2050)
-  @IsInt()
-  year: number;
+  @MaxLength(4, { message: 'Book description is too long' })
+  @IsString()
+  year: string;
 
   @ApiProperty()
   @IsNotEmpty()

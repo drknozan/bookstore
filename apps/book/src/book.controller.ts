@@ -8,6 +8,7 @@ import {
   Get,
   Put,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { BookService } from './book.service';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
@@ -21,10 +22,20 @@ import {
   Payload,
   RmqContext,
 } from '@nestjs/microservices';
+import { SearchBookDto } from './dto/search-book.dto';
 
 @Controller()
 export class BookController {
   constructor(private readonly bookService: BookService) {}
+
+  @Get('/books/search')
+  @ApiResponse({ status: 400, description: 'BAD_REQUEST' })
+  @ApiResponse({ status: 500, description: 'INTERNAL_ERROR' })
+  async searchBook(@Query() searchBookDto: SearchBookDto): Promise<BookDto[]> {
+    const books = await this.bookService.searchBook(searchBookDto);
+
+    return books;
+  }
 
   @Get('/books/:slug')
   @ApiResponse({ status: 400, description: 'BAD_REQUEST' })

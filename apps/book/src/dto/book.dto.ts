@@ -2,7 +2,7 @@ export class BookDto {
   slug: string;
   name: string;
   description: string;
-  year: number;
+  year: string;
   author: string;
   numberOfPages: number;
   language: string;

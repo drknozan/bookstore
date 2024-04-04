@@ -16,9 +16,9 @@ export class UpdateBookDto {
 
   @ApiProperty()
   @IsOptional()
-  @Max(2050)
-  @IsInt()
-  year: number;
+  @MaxLength(4, { message: 'Book description is too long' })
+  @IsString()
+  year: string;
 
   @ApiProperty()
   @IsOptional()

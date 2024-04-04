@@ -24,4 +24,41 @@ export class SearchService {
 
     return body.result;
   }
+
+  async searchIndex({
+    index,
+    query,
+    fields,
+    page,
+    limit,
+  }: {
+    index: string;
+    query: string;
+    fields: string[];
+    page?: number;
+    limit?: number;
+  }) {
+    const from = (page - 1) * limit;
+    const size = limit;
+
+    const { body } = await this.elasticsearchService.search({
+      index,
+      body: {
+        from,
+        size,
+        query: {
+          multi_match: {
+            query,
+            type: 'cross_fields',
+            fields,
+            operator: 'or',
+          },
+        },
+      },
+    });
+
+    const results = body.hits.hits.map((res) => res._source);
+
+    return { resultCount: body.hits.total.value, results };
+  }
 }

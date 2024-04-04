@@ -14,11 +14,19 @@ describe('BookService', () => {
     delete: jest.fn(),
   };
 
+  const mockSearchServiceClient = {
+    send: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BookService,
         { provide: getRepositoryToken(Book), useValue: mockBookRepository },
+        {
+          provide: 'SEARCH_SERVICE',
+          useValue: mockSearchServiceClient,
+        },
       ],
     }).compile();
 
@@ -35,7 +43,7 @@ describe('BookService', () => {
       slug: 'lTwkejX-l_iAV096c0CLK-book-name',
       name: 'book-name',
       description: 'book-description',
-      year: 2015,
+      year: '2015',
       author: 'book-author',
       numberOfPages: 500,
       language: 'english',
@@ -70,7 +78,7 @@ describe('BookService', () => {
       slug: 'lTwkejX-l_iAV096c0CLK-book-name',
       name: 'book-name',
       description: 'book-description',
-      year: 2015,
+      year: '2015',
       author: 'book-author',
       numberOfPages: 500,
       language: 'english',
@@ -94,7 +102,7 @@ describe('BookService', () => {
       slug: 'lTwkejX-l_iAV096c0CLK-book-name',
       name: 'book-name',
       description: 'book-description',
-      year: 2015,
+      year: '2015',
       author: 'book-author',
       numberOfPages: 500,
       language: 'english',
@@ -117,7 +125,7 @@ describe('BookService', () => {
       slug: 'lTwkejX-l_iAV096c0CLK-book-name',
       name: 'book-name',
       description: 'book-description',
-      year: 2015,
+      year: '2015',
       author: 'book-author',
       numberOfPages: 500,
       language: 'english',
@@ -142,7 +150,7 @@ describe('BookService', () => {
       slug: 'lTwkejX-l_iAV096c0CLK-book-name',
       name: 'book-name',
       description: 'book-description',
-      year: 2015,
+      year: '2015',
       author: 'book-author',
       numberOfPages: 500,
       language: 'english',

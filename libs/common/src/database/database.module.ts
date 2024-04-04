@@ -13,7 +13,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         password: configService.get<string>('POSTGRES_PASSWORD'),
         database: configService.get<string>('POSTGRES_DB'),
         autoLoadEntities: true,
-        synchronize: true, // shouldn't be used in production
+        synchronize: true,
       }),
       inject: [ConfigService],
     }),

@@ -15,7 +15,7 @@ export class Book {
   description: string;
 
   @Column()
-  year: number;
+  year: string;
 
   @Column()
   author: string;
